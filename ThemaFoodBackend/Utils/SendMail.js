@@ -1,7 +1,5 @@
 import SibApiV3Sdk from "sib-api-v3-sdk";
 
-import fs from "fs";
-
 //================
 // Brevo Config
 //================
@@ -25,7 +23,6 @@ const SendMail = async ({
   To,
   Subject,
   Html,
-  AttachmentPath,
 }) => {
   try {
     const ApiInstance =
@@ -53,27 +50,6 @@ const SendMail = async ({
 
       htmlContent: Html,
     };
-
-    //================
-    // PDF Attachment
-    //================
-
-    if (AttachmentPath) {
-      const Attachment =
-        fs
-          .readFileSync(
-            AttachmentPath
-          )
-          .toString("base64");
-
-      EmailData.attachment = [
-        {
-          content: Attachment,
-
-          name: "OrderInvoice.pdf",
-        },
-      ];
-    }
 
     //================
     // Send Mail

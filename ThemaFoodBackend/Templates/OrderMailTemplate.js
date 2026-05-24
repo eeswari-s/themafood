@@ -6,7 +6,7 @@ const OrderMailTemplate = (
   Order
 ) => {
   return `
-  
+
   <div
     style="
       font-family: Arial;
@@ -54,10 +54,71 @@ const OrderMailTemplate = (
       ₹${Order.TotalAmount}
     </p>
 
-    <p>
-      Order invoice attached
-      below.
-    </p>
+    <h2
+      style="
+        margin-top: 30px;
+        color: #222;
+      "
+    >
+      Ordered Products
+    </h2>
+
+    ${Order.OrderedProducts.map(
+      (Product) => `
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 1px solid #eee;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+          "
+        >
+
+          <img
+            src="${Product.ProductImage}"
+            alt="${Product.ProductName}"
+            width="80"
+            height="80"
+            style="
+              object-fit: cover;
+              border-radius: 8px;
+            "
+          />
+
+          <div>
+
+            <p>
+              <strong>
+                Product Name :
+              </strong>
+
+              ${Product.ProductName}
+            </p>
+
+            <p>
+              <strong>
+                Quantity :
+              </strong>
+
+              ${Product.Quantity}
+            </p>
+
+            <p>
+              <strong>
+                Price :
+              </strong>
+
+              ₹${Product.Price}
+            </p>
+
+          </div>
+
+        </div>
+      `
+    ).join("")}
 
   </div>
 

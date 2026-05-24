@@ -1,13 +1,7 @@
 import OrderModel from "../Models/OrderModel.js";
-
 import CartModel from "../Models/CartModel.js";
-
 import UserModel from "../Models/UserModel.js";
-
-import GenerateOrderPdf from "../Utils/GenerateOrderPdf.js";
-
 import SendMail from "../Utils/SendMail.js";
-
 import OrderMailTemplate from "../Templates/OrderMailTemplate.js";
 
 //================
@@ -52,7 +46,8 @@ export const CreateOrder = async (
     if (!Address) {
       return response.status(400).json({
         Success: false,
-        Message: "Address is required",
+        Message:
+          "Address is required",
       });
     }
 
@@ -91,9 +86,7 @@ export const CreateOrder = async (
       const Product =
         Item.ProductID;
 
-      if (!Product) {
-        continue;
-      }
+      if (!Product) continue;
 
       const Variant =
         Product.Variants.find(
@@ -102,9 +95,7 @@ export const CreateOrder = async (
             Item.VariantID.toString()
         );
 
-      if (!Variant) {
-        continue;
-      }
+      if (!Variant) continue;
 
       const ItemTotal =
         Variant.OfferPrice *
@@ -112,20 +103,13 @@ export const CreateOrder = async (
 
       OrderedProducts.push({
         ProductID: Product._id,
-
         ProductName:
           Product.ProductName,
-
         VariantID: Variant._id,
-
         Weight: Variant.Weight,
-
         Quantity: Item.Quantity,
-
         Price: Variant.OfferPrice,
-
         TotalPrice: ItemTotal,
-
         ProductImage:
           Variant.VariantImages?.[0]
             ?.ImageURL ||
@@ -135,7 +119,6 @@ export const CreateOrder = async (
       });
 
       TotalItems += Item.Quantity;
-
       TotalAmount += ItemTotal;
     }
 
@@ -146,32 +129,15 @@ export const CreateOrder = async (
     const NewOrder =
       await OrderModel.create({
         UserID,
-
         OrderedProducts,
-
         CustomerName,
-
         PhoneNumber,
-
         AlternatePhoneNumber,
-
         Address,
-
         Notes,
-
         TotalItems,
-
         TotalAmount,
       });
-
-    //================
-    // Generate PDF
-    //================
-
-    const PdfPath =
-      await GenerateOrderPdf(
-        NewOrder
-      );
 
     //================
     // Find Admin
@@ -180,26 +146,21 @@ export const CreateOrder = async (
     const AdminUser =
       await UserModel.findOne({
         Role: "Admin",
-
         IsDeleted: false,
       });
 
     //================
-    // Send Mail
+    // Send Mail Only
     //================
 
     if (AdminUser) {
       await SendMail({
         To: AdminUser.Email,
-
         Subject:
-          "New ThemaFood Order",
-
+          "New maFood Order",
         Html: OrderMailTemplate(
           NewOrder
         ),
-
-        AttachmentPath: PdfPath,
       });
     }
 
@@ -213,16 +174,13 @@ export const CreateOrder = async (
 
     response.status(201).json({
       Success: true,
-
       Message:
         "Order placed successfully",
-
       Order: NewOrder,
     });
   } catch (error) {
     response.status(500).json({
       Success: false,
-
       Message: error.message,
     });
   }
@@ -242,7 +200,6 @@ export const GetUserOrders = async (
     const Orders =
       await OrderModel.find({
         UserID,
-
         IsDeleted: false,
       }).sort({
         createdAt: -1,
@@ -250,15 +207,12 @@ export const GetUserOrders = async (
 
     response.status(200).json({
       Success: true,
-
       TotalOrders: Orders.length,
-
       Orders,
     });
   } catch (error) {
     response.status(500).json({
       Success: false,
-
       Message: error.message,
     });
   }
@@ -287,15 +241,12 @@ export const GetAllOrders = async (
 
     response.status(200).json({
       Success: true,
-
       TotalOrders: Orders.length,
-
       Orders,
     });
   } catch (error) {
     response.status(500).json({
       Success: false,
-
       Message: error.message,
     });
   }
@@ -317,14 +268,12 @@ export const UpdateOrderStatus =
       const ExistingOrder =
         await OrderModel.findOne({
           _id: OrderID,
-
           IsDeleted: false,
         });
 
       if (!ExistingOrder) {
         return response.status(404).json({
           Success: false,
-
           Message: "Order not found",
         });
       }
@@ -336,14 +285,12 @@ export const UpdateOrderStatus =
 
       response.status(200).json({
         Success: true,
-
         Message:
           "Order status updated successfully",
       });
     } catch (error) {
       response.status(500).json({
         Success: false,
-
         Message: error.message,
       });
     }
