@@ -1,39 +1,23 @@
 import puppeteer from "puppeteer";
-
 import fs from "fs";
-
 import path from "path";
-
 import OrderInvoiceTemplate from "../Templates/OrderInvoiceTemplate.js";
 
-//================
+//======================
 // Generate Order PDF
-//================
+//======================
 
-const GenerateOrderPdf = async (
-  Order
-) => {
+const GenerateOrderPdf = async (Order) => {
+  let Browser;
+
   try {
-    //================
-    // Invoice Folder
-    //================
+    const InvoiceFolder = path.join("Invoices");
 
-    const InvoiceFolder =
-      path.join("Invoices");
-
-    if (
-      !fs.existsSync(
-        InvoiceFolder
-      )
-    ) {
-      fs.mkdirSync(
-        InvoiceFolder
-      );
+    if (!fs.existsSync(InvoiceFolder)) {
+      fs.mkdirSync(InvoiceFolder, {
+        recursive: true,
+      });
     }
-
-    //================
-    // PDF File Path
-    //================
 
     const FileName = `Order-${Order._id}.pdf`;
 
@@ -42,26 +26,29 @@ const GenerateOrderPdf = async (
       FileName
     );
 
-    //================
+    //======================
     // Launch Browser
-    //================
+    //======================
 
-    const Browser =
+    Browser =
       await puppeteer.launch({
-        headless: true,
+        headless: "new",
+
+        executablePath:
+          puppeteer.executablePath(),
+
+        args: [
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-dev-shm-usage",
+        ],
       });
 
     const Page =
       await Browser.newPage();
 
-    //================
-    // HTML Template
-    //================
-
     const HtmlContent =
-      OrderInvoiceTemplate(
-        Order
-      );
+      OrderInvoiceTemplate(Order);
 
     await Page.setContent(
       HtmlContent,
@@ -71,25 +58,24 @@ const GenerateOrderPdf = async (
       }
     );
 
-    //================
-    // Generate PDF
-    //================
-
     await Page.pdf({
       path: FilePath,
-
       format: "A4",
-
       printBackground: true,
     });
 
-    await Browser.close();
-
     return FilePath;
   } catch (error) {
-    throw new Error(
+    console.log(
+      "Generate PDF Error:",
       error.message
     );
+
+    throw error;
+  } finally {
+    if (Browser) {
+      await Browser.close();
+    }
   }
 };
 
