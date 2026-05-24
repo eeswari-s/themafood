@@ -48,6 +48,16 @@ app.get("/", (request, response) => {
   });
 });
 
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://themafood.vercel.app"
+    ],
+    credentials: true,
+  })
+);
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
