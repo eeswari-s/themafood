@@ -61,7 +61,7 @@ export const Register = async (request, response) => {
       },
       process.env.JWT_SECRET,
       {
-        expiresIn: "7d",
+        expiresIn: "365d",
       }
     );
 
