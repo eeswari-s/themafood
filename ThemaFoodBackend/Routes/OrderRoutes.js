@@ -58,9 +58,7 @@ router.get(
 router.put(
   "/update-order-status/:OrderID",
 
-  AuthMiddleware,
-
-  RoleMiddleware("Admin"),
+  
 
   UpdateOrderStatus
 );

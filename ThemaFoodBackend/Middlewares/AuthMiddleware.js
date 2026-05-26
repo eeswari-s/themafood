@@ -1,5 +1,4 @@
 import jwt from "jsonwebtoken";
-
 import UserModel from "../Models/UserModel.js";
 
 //================
@@ -15,6 +14,11 @@ const AuthMiddleware = async (
     const Authorization =
       request.headers.authorization;
 
+    console.log(
+      "Authorization Header =>",
+      Authorization
+    );
+
     if (!Authorization) {
       return response.status(401).json({
         Success: false,
@@ -22,7 +26,13 @@ const AuthMiddleware = async (
       });
     }
 
-    const Token = Authorization.split(" ")[1];
+    const Token =
+      Authorization.split(" ")[1];
+
+    console.log(
+      "Token =>",
+      Token
+    );
 
     if (!Token) {
       return response.status(401).json({
@@ -31,15 +41,50 @@ const AuthMiddleware = async (
       });
     }
 
-    const DecodedToken = jwt.verify(
-      Token,
-      process.env.JWT_SECRET
+    const DecodedToken =
+      jwt.verify(
+        Token,
+        process.env.JWT_SECRET
+      );
+
+    console.log(
+      "Decoded Token =>",
+      DecodedToken
     );
 
-    const ExistingUser = await UserModel.findOne({
-      _id: DecodedToken.UserID,
-      IsDeleted: false,
-    });
+    const UserId =
+      DecodedToken.UserID ||
+      DecodedToken.id;
+
+    console.log(
+      "User Id =>",
+      UserId
+    );
+
+    // Debug All Users
+    const AllUsers =
+      await UserModel.find();
+
+    console.log(
+      "All Users =>",
+      AllUsers.map((user) => ({
+        _id: user._id.toString(),
+        Email: user.Email,
+        Role: user.Role,
+        IsDeleted: user.IsDeleted,
+      }))
+    );
+
+    const ExistingUser =
+      await UserModel.findOne({
+        _id: UserId,
+        IsDeleted: false,
+      });
+
+    console.log(
+      "Existing User =>",
+      ExistingUser
+    );
 
     if (!ExistingUser) {
       return response.status(404).json({
@@ -51,7 +96,8 @@ const AuthMiddleware = async (
     if (ExistingUser.IsBlocked) {
       return response.status(403).json({
         Success: false,
-        Message: "User account is blocked",
+        Message:
+          "User account is blocked",
       });
     }
 
@@ -59,9 +105,15 @@ const AuthMiddleware = async (
 
     next();
   } catch (error) {
+    console.log(
+      "Auth Middleware Error =>",
+      error
+    );
+
     response.status(401).json({
       Success: false,
       Message: "Unauthorized access",
+      Error: error.message,
     });
   }
 };

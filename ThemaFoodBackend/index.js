@@ -13,6 +13,7 @@ import CartRoutes from "./Routes/CartRoutes.js";
 import OrderRoutes from "./Routes/OrderRoutes.js";
 import DashboardRoutes from "./Routes/DashboardRoutes.js";
 import ContactRoutes from "./Routes/ContactRoutes.js";
+import UserRoutes from "./Routes/UserRoutes.js";
 
 
 const app = express();
@@ -36,6 +37,7 @@ app.use("/api/cart", CartRoutes);
 app.use("/api/order", OrderRoutes);
 app.use("/api/dashboard", DashboardRoutes);
 app.use("/api/contact", ContactRoutes);
+app.use("/api/user",UserRoutes);
 
 
 
