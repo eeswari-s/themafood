@@ -20,9 +20,7 @@ const router = express.Router();
 router.post(
   "/create-product",
 
-  AuthMiddleware,
 
-  RoleMiddleware("Admin"),
 
   CreateProduct
 );
