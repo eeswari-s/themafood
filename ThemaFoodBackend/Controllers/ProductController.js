@@ -525,21 +525,24 @@ export const DeleteProduct = async (
   try {
     const { ProductID } = request.params;
 
-    const ExistingProduct =
-      await ProductModel.findById(
-        ProductID
+    const DeletedProduct =
+      await ProductModel.findByIdAndUpdate(
+        ProductID,
+        {
+          IsDeleted: true,
+        },
+        {
+          new: true,
+          runValidators: false,
+        }
       );
 
-    if (!ExistingProduct) {
+    if (!DeletedProduct) {
       return response.status(404).json({
         Success: false,
         Message: "Product not found",
       });
     }
-
-    ExistingProduct.IsDeleted = true;
-
-    await ExistingProduct.save();
 
     response.status(200).json({
       Success: true,
