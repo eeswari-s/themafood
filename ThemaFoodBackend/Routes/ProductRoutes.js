@@ -9,6 +9,7 @@ import {
   GetSingleProduct,
   UpdateProduct,
   DeleteProduct,
+  BulkCreateProducts
 } from "../Controllers/ProductController.js";
 
 const router = express.Router();
@@ -23,6 +24,14 @@ router.post(
 
 
   CreateProduct
+);
+
+
+
+//bulk orders 
+router.post(
+  "/bulk-create",
+  BulkCreateProducts
 );
 
 //================

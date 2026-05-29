@@ -1,5 +1,3 @@
-import slugify from "slugify";
-
 import ProductModel from "../Models/ProductModel.js";
 
 //================
@@ -16,22 +14,14 @@ export const CreateProduct = async (
       Description,
       Category,
       SubCategory,
-
       ProductImages,
-
       Variants,
-
       ProductHighlights,
-
       FeaturedProduct,
       TrendingProduct,
       FestivalProduct,
       BestSellerProduct,
     } = request.body;
-
-    //================
-    // Validation
-    //================
 
     if (!ProductName) {
       return response.status(400).json({
@@ -61,38 +51,6 @@ export const CreateProduct = async (
       });
     }
 
-    //================
-    // Slug Generate
-    //================
-
-    const Slug = slugify(ProductName, {
-      lower: true,
-      strict: true,
-      trim: true,
-    });
-
-    //================
-    // Existing Product
-    //================
-
-    const ExistingProduct =
-      await ProductModel.findOne({
-        Slug,
-        IsDeleted: false,
-      });
-
-    if (ExistingProduct) {
-      return response.status(400).json({
-        Success: false,
-        Message:
-          "Product already exists",
-      });
-    }
-
-    //================
-    // Variant Parsing
-    //================
-
     let ParsedVariants = [];
 
     if (Variants) {
@@ -102,25 +60,14 @@ export const CreateProduct = async (
           : Variants;
     }
 
-    //================
-    // Product Highlights Parsing
-    //================
-
     let ParsedHighlights = [];
 
     if (ProductHighlights) {
       ParsedHighlights =
-        typeof ProductHighlights ===
-        "string"
-          ? JSON.parse(
-              ProductHighlights
-            )
+        typeof ProductHighlights === "string"
+          ? JSON.parse(ProductHighlights)
           : ProductHighlights;
     }
-
-    //================
-    // Product Images Parsing
-    //================
 
     let ParsedImages = [];
 
@@ -131,19 +78,15 @@ export const CreateProduct = async (
           : ProductImages;
     }
 
-    //================
-    // Offer Price Calculation
-    //================
-
     const FinalVariants =
       ParsedVariants.map((Variant) => {
-        const OriginalPrice =
-          Number(Variant.OriginalPrice);
+        const OriginalPrice = Number(
+          Variant.OriginalPrice
+        );
 
-        const OfferPercentage =
-          Number(
-            Variant.OfferPercentage || 0
-          );
+        const OfferPercentage = Number(
+          Variant.OfferPercentage || 0
+        );
 
         const DiscountAmount =
           (OriginalPrice *
@@ -155,44 +98,27 @@ export const CreateProduct = async (
 
         return {
           ...Variant,
-
           OfferPrice:
             Math.round(OfferPrice),
         };
       });
 
-    //================
-    // Create Product
-    //================
-
     const NewProduct =
       await ProductModel.create({
         ProductName,
-
-        Slug,
-
         Description,
-
         Category,
-
         SubCategory,
-
         ProductImages: ParsedImages,
-
         Variants: FinalVariants,
-
         ProductHighlights:
           ParsedHighlights,
-
         FeaturedProduct:
           FeaturedProduct || false,
-
         TrendingProduct:
           TrendingProduct || false,
-
         FestivalProduct:
           FestivalProduct || false,
-
         BestSellerProduct:
           BestSellerProduct || false,
       });
@@ -201,7 +127,6 @@ export const CreateProduct = async (
       Success: true,
       Message:
         "Product created successfully",
-
       Product: NewProduct,
     });
   } catch (error) {
@@ -211,6 +136,89 @@ export const CreateProduct = async (
     });
   }
 };
+
+//================
+// Bulk Create Products
+//================
+
+export const BulkCreateProducts =
+  async (request, response) => {
+    try {
+      const { Products } = request.body;
+
+      if (
+        !Products ||
+        !Array.isArray(Products) ||
+        Products.length === 0
+      ) {
+        return response.status(400).json({
+          Success: false,
+          Message:
+            "Products array is required",
+        });
+      }
+
+      const FinalProducts =
+        Products.map((Product) => {
+          const FinalVariants =
+            Product.Variants?.map(
+              (Variant) => {
+                const OriginalPrice =
+                  Number(
+                    Variant.OriginalPrice
+                  );
+
+                const OfferPercentage =
+                  Number(
+                    Variant.OfferPercentage ||
+                      0
+                  );
+
+                const DiscountAmount =
+                  (OriginalPrice *
+                    OfferPercentage) /
+                  100;
+
+                const OfferPrice =
+                  OriginalPrice -
+                  DiscountAmount;
+
+                return {
+                  ...Variant,
+                  OfferPrice:
+                    Math.round(
+                      OfferPrice
+                    ),
+                };
+              }
+            ) || [];
+
+          return {
+            ...Product,
+            Variants: FinalVariants,
+          };
+        });
+
+      const SavedProducts =
+        await ProductModel.insertMany(
+          FinalProducts
+        );
+
+      response.status(201).json({
+        Success: true,
+        Message:
+          "Bulk products uploaded successfully",
+        TotalProducts:
+          SavedProducts.length,
+        Products: SavedProducts,
+      });
+    } catch (error) {
+      response.status(500).json({
+        Success: false,
+        Message: error.message,
+      });
+    }
+  };
 
 //================
 // Get All Products
@@ -231,7 +239,6 @@ export const GetAllProducts = async (
     response.status(200).json({
       Success: true,
       TotalProducts: Products.length,
-
       Products,
     });
   } catch (error) {
@@ -246,40 +253,37 @@ export const GetAllProducts = async (
 // Get Single Product
 //================
 
-export const GetSingleProduct = async (
-  request,
-  response
-) => {
-  try {
-    const { ProductID } =
-      request.params;
+export const GetSingleProduct =
+  async (request, response) => {
+    try {
+      const { ProductID } =
+        request.params;
 
-    const Product =
-      await ProductModel.findOne({
-        _id: ProductID,
+      const Product =
+        await ProductModel.findOne({
+          _id: ProductID,
+          IsDeleted: false,
+        });
 
-        IsDeleted: false,
+      if (!Product) {
+        return response.status(404).json({
+          Success: false,
+          Message:
+            "Product not found",
+        });
+      }
+
+      response.status(200).json({
+        Success: true,
+        Product,
       });
-
-    if (!Product) {
-      return response.status(404).json({
+    } catch (error) {
+      response.status(500).json({
         Success: false,
-        Message: "Product not found",
+        Message: error.message,
       });
     }
-
-    response.status(200).json({
-      Success: true,
-
-      Product,
-    });
-  } catch (error) {
-    response.status(500).json({
-      Success: false,
-      Message: error.message,
-    });
-  }
-};
+  };
 
 //================
 // Update Product
@@ -290,31 +294,23 @@ export const UpdateProduct = async (
   response
 ) => {
   try {
-    const { ProductID } = request.params;
+    const { ProductID } =
+      request.params;
 
     const {
       ProductName,
       Description,
       Category,
       SubCategory,
-
       ProductImages,
-
       Variants,
-
       ProductHighlights,
-
       FeaturedProduct,
       TrendingProduct,
       FestivalProduct,
       BestSellerProduct,
-
       IsAvailable,
     } = request.body;
-
-    //================
-    // Existing Product
-    //================
 
     const ExistingProduct =
       await ProductModel.findOne({
@@ -325,48 +321,10 @@ export const UpdateProduct = async (
     if (!ExistingProduct) {
       return response.status(404).json({
         Success: false,
-        Message: "Product not found",
+        Message:
+          "Product not found",
       });
     }
-
-    //================
-    // Slug Generate
-    //================
-
-    let Slug = ExistingProduct.Slug;
-
-    if (
-      ProductName &&
-      ProductName !==
-        ExistingProduct.ProductName
-    ) {
-      Slug = slugify(ProductName, {
-        lower: true,
-        strict: true,
-        trim: true,
-      });
-
-      const DuplicateProduct =
-        await ProductModel.findOne({
-          Slug,
-          _id: {
-            $ne: ProductID,
-          },
-          IsDeleted: false,
-        });
-
-      if (DuplicateProduct) {
-        return response.status(400).json({
-          Success: false,
-          Message:
-            "Product name already exists",
-        });
-      }
-    }
-
-    //================
-    // Variant Parsing
-    //================
 
     let ParsedVariants =
       ExistingProduct.Variants;
@@ -377,10 +335,6 @@ export const UpdateProduct = async (
           ? JSON.parse(Variants)
           : Variants;
     }
-
-    //================
-    // Product Highlights Parsing
-    //================
 
     let ParsedHighlights =
       ExistingProduct.ProductHighlights;
@@ -395,10 +349,6 @@ export const UpdateProduct = async (
           : ProductHighlights;
     }
 
-    //================
-    // Product Images Parsing
-    //================
-
     let ParsedImages =
       ExistingProduct.ProductImages;
 
@@ -408,10 +358,6 @@ export const UpdateProduct = async (
           ? JSON.parse(ProductImages)
           : ProductImages;
     }
-
-    //================
-    // Offer Price Calculation
-    //================
 
     const FinalVariants =
       ParsedVariants.map((Variant) => {
@@ -433,15 +379,10 @@ export const UpdateProduct = async (
 
         return {
           ...Variant,
-
           OfferPrice:
             Math.round(OfferPrice),
         };
       });
-
-    //================
-    // Update Product
-    //================
 
     const UpdatedProduct =
       await ProductModel.findByIdAndUpdate(
@@ -450,8 +391,6 @@ export const UpdateProduct = async (
           ProductName:
             ProductName ||
             ExistingProduct.ProductName,
-
-          Slug,
 
           Description:
             Description ||
@@ -503,7 +442,6 @@ export const UpdateProduct = async (
       Success: true,
       Message:
         "Product updated successfully",
-
       Product: UpdatedProduct,
     });
   } catch (error) {
@@ -523,7 +461,8 @@ export const DeleteProduct = async (
   response
 ) => {
   try {
-    const { ProductID } = request.params;
+    const { ProductID } =
+      request.params;
 
     const DeletedProduct =
       await ProductModel.findByIdAndUpdate(
@@ -540,7 +479,8 @@ export const DeleteProduct = async (
     if (!DeletedProduct) {
       return response.status(404).json({
         Success: false,
-        Message: "Product not found",
+        Message:
+          "Product not found",
       });
     }
 
